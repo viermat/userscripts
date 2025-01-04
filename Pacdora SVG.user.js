@@ -2,7 +2,7 @@
 // @name         Pacdora SVG
 // @version      1
 // @description  Pacdora free SVG download button
-// @author       shellworm
+// @author       viermat
 // @match        https://www.pacdora.com/dielines-detail/*
 // @run-at       document-idle
 // @grant        none
