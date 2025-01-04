@@ -2,7 +2,7 @@
 // @name         24edu Average
 // @version      1
 // @description  Calculate yearly average before end of the year
-// @author       shellworm
+// @author       viermat
 // @match        https://www.24edu.ro/Catalog
 // @run-at       document-idle
 // @grant        none
@@ -19,17 +19,7 @@
     };
 
     var gradesArr = $("span.nota");
-    var grades = [
-        {
-            Materie: "Purtare",
-            Nota: Number(
-                findSpan("Purtare")
-                    .find("td > span > span:nth-child(1)")
-                    .text()
-                    .replaceAll(",", ".")
-            ).toString(),
-        },
-    ];
+    var grades = [];
 
     var root = {};
 
