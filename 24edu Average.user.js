@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         24edu Average
-// @version      1
+// @version      2
 // @description  Calculate yearly average before end of the year
 // @author       viermat
 // @match        https://www.24edu.ro/Catalog
