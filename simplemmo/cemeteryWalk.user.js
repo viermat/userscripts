@@ -4,6 +4,7 @@
 // @description  Undetectable auto stepper
 // @author       viermat (https://github.com/viermat)
 // @match        https://web.simple-mmo.com/travel*
+// @grant        none
 // ==/UserScript==
 
 (function () {
