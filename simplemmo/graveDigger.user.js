@@ -12,10 +12,21 @@
 (async function () {
 	"use strict";
 
-	GM_registerMenuCommand("Set API Key", function () {
-		let key = prompt("Enter your API key:");
+	GM_registerMenuCommand("Get API Key", function () {
+		let tempFrame = document.createElement("iframe");
+		tempFrame.setAttribute("src", "https://web.simple-mmo.com/p-api/home");
+		document.body.appendChild(tempFrame);
 
-		if (key) GM_setValue("api_key", key);
+		tempFrame.addEventListener("load", () => {
+			GM_setValue(
+				"api_key",
+				tempFrame.contentWindow.document.querySelector(
+					"input[name='api_key']",
+				).value,
+			);
+
+			tempFrame.remove();
+		});
 	});
 
 	const API_URL = "https://api.simple-mmo.com/v1/";
