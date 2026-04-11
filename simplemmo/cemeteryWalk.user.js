@@ -4,11 +4,15 @@
 // @description  Undetectable auto stepper
 // @author       viermat (https://github.com/viermat)
 // @match        https://web.simple-mmo.com/travel*
+// @icon         https://web.simple-mmo.com/favicon-32x32.png
 // @grant        none
 // ==/UserScript==
 
 (function () {
 	"use strict";
+
+	// Ensure script doesn't run in iframes
+	if (window.top !== window.self) return;
 
 	// Create custom menu category
 	const titleOld = document.querySelector("h3");

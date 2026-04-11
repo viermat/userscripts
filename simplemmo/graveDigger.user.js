@@ -4,6 +4,7 @@
 // @description  Spy player's stats before attacking
 // @author       viermat (https://github.com/viermat)
 // @match        https://web.simple-mmo.com/*
+// @icon         https://web.simple-mmo.com/favicon-32x32.png
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
@@ -11,6 +12,9 @@
 
 (async function () {
 	"use strict";
+
+	// Ensure script doesn't run in iframes
+	if (window.top !== window.self) return;
 
 	GM_registerMenuCommand("Get API Key", function () {
 		let tempFrame = document.createElement("iframe");

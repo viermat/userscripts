@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name 		 Graveyard Shift
-// @version      v1
+// @version      v2
 // @description  Get notifications when the boss is almost attackable
 // @author       viermat (https://github.com/viermat)
 // @match        https://web.simple-mmo.com/*
+// @icon         https://web.simple-mmo.com/favicon-32x32.png
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
@@ -11,22 +12,10 @@
 // ==/UserScript==
 
 (async function () {
-	GM_registerMenuCommand("Set earliest notification", function () {
-		let value = prompt(
-			"Set how soon the notifications should start (in minutes)",
-			5,
-		);
-		if (value) GM_setValue("timeout", value);
-	});
+	"use strict";
 
-	GM_registerMenuCommand("Set notification interval", function () {
-		let value = prompt(
-			"Set how often the notification should appear when the world boss is soon (in minutes)",
-			2,
-		);
-
-		if (value) GM_setValue("interval", value);
-	});
+	// Ensure script doesn't run in iframes
+	if (window.top !== window.self) return;
 
 	/**
 	 * Get date when boss is attackable
@@ -45,62 +34,118 @@
 		let returnDate = new Date();
 		returnDate.setSeconds(returnDate.getSeconds() + secs);
 
-		return returnDate;
+		return returnDate.getTime();
 	}
 
-	// Use iframe to avoid using the public API
-	let tempFrame = document.createElement("iframe");
-	tempFrame.setAttribute(
-		"src",
-		"https://web.simple-mmo.com/battle/world-bosses",
-	);
-	tempFrame.setAttribute("style", "display: none");
-	document.body.appendChild(tempFrame);
+	/**
+	 * Create cache for world bosses
+	 * @returns {Object[]} Parsed bosses array
+	 */
+	function cacheBosses() {
+		return new Promise((resolve) => {
+			const bossArr = [];
 
-	const BOSSES = [];
+			// Use iframe to avoid using the public API
+			let tempFrame = document.createElement("iframe");
+			tempFrame.setAttribute(
+				"src",
+				"https://web.simple-mmo.com/battle/world-bosses",
+			);
 
-	tempFrame.addEventListener("load", () => {
-		// Push earliest boss first
-		let earliestBoss = tempFrame.contentWindow.document.querySelector(
-			"div.p-4 > div > div.ml-3",
-		);
+			tempFrame.setAttribute("style", "display: none");
+			document.body.appendChild(tempFrame);
 
-		BOSSES.push({
-			name: earliestBoss
-				.querySelector(".text-gray-900")
-				.textContent.trim(),
-			level: earliestBoss
-				.querySelector(".text-gray-500")
-				.textContent.trim(),
-			avatar: earliestBoss.parentElement.querySelector(
-				"div.flex-shrink-0 > img",
-			).src,
-			date: parseTime(
-				earliestBoss
-					.querySelector("p.text-gray-400")
-					.textContent.trim(),
-			),
+			tempFrame.addEventListener("load", () => {
+				// Push earliest boss first
+				let earliestBoss =
+					tempFrame.contentWindow.document.querySelector(
+						"div.p-4 > div > div.ml-3",
+					);
+
+				bossArr.push({
+					name: earliestBoss
+						.querySelector(".text-gray-900")
+						.textContent.trim(),
+					level: earliestBoss
+						.querySelector(".text-gray-500")
+						.textContent.trim(),
+					avatar: earliestBoss.parentElement.querySelector(
+						"div.flex-shrink-0 > img",
+					).src,
+					date: parseTime(
+						earliestBoss
+							.querySelector("p.text-gray-400")
+							.textContent.trim(),
+					),
+				});
+
+				// Push rest of the bosses
+				tempFrame.contentWindow.document
+					.querySelectorAll("div.truncate > div:nth-child(3) > div")
+					.forEach((e) => {
+						let mainDiv = e.closest(".truncate");
+
+						bossArr.push({
+							name: mainDiv
+								.querySelector(".font-bold")
+								.textContent.trim(),
+							level: mainDiv
+								.querySelector(".font-normal")
+								.textContent.trim(),
+							avatar: mainDiv.parentElement.querySelector("img")
+								.src,
+							date: parseTime(e.textContent.trim()),
+						});
+					});
+
+				tempFrame.remove();
+
+				resolve(bossArr);
+			});
 		});
+	}
 
-		// Push rest of the bosses
-		tempFrame.contentWindow.document
-			.querySelectorAll("div.truncate > div:nth-child(3) > div")
-			.forEach((e) => {
-				let mainDiv = e.closest(".truncate");
+	// Cache system
+	if (!GM_getValue("cache")) {
+		await cacheBosses().then((b) => {
+			GM_setValue("cache", {
+				lastCache: new Date().getTime(),
+				bosses: b,
+			});
+		});
+	} else {
+		let diff = new Date(GM_getValue("cache").lastCache) - new Date();
 
-				BOSSES.push({
-					name: mainDiv
-						.querySelector(".font-bold")
-						.textContent.trim(),
-					level: mainDiv
-						.querySelector(".font-normal")
-						.textContent.trim(),
-					avatar: mainDiv.parentElement.querySelector("img").src,
-					date: parseTime(e.textContent.trim()),
+		if (diff <= -30 * 60 * 1000) {
+			cacheBosses().then((b) => {
+				GM_setValue("cache", {
+					lastCache: new Date().getTime(),
+					bosses: b,
 				});
 			});
+		}
+	}
 
-		tempFrame.remove();
+	// Default settings
+	if (!GM_getValue("timeout")) GM_setValue("timeout", 5);
+	if (!GM_getValue("interval")) GM_setValue("interval", 2);
+
+	GM_registerMenuCommand("Set earliest notification", function () {
+		let value = prompt(
+			"Set how soon the notifications should start (in minutes)",
+			5,
+		);
+
+		if (value) GM_setValue("timeout", value);
+	});
+
+	GM_registerMenuCommand("Set notification interval", function () {
+		let value = prompt(
+			"Set how often the notification should appear when the world boss is soon (in minutes)",
+			2,
+		);
+
+		if (value) GM_setValue("interval", value);
 	});
 
 	/**
@@ -111,7 +156,7 @@
 	 */
 	function handleNotify(bosses, timeout, toastTimeout = 15) {
 		bosses.forEach((b) => {
-			let diff = b.date.getTime() - new Date().getTime();
+			let diff = b.date - new Date();
 
 			if (diff >= 0 && diff <= timeout * 60 * 1000) {
 				unsafeWindow.game_data.settings.toast_position = "bottom_left";
@@ -127,13 +172,15 @@
 						.padStart(2, "0")}`,
 					null,
 					"info",
-					15 * 1000,
+					toastTimeout * 1000,
 				);
 
 				unsafeWindow.game_data.settings.toast_position = null;
 			}
 		});
 	}
+
+	const BOSSES = GM_getValue("cache").bosses;
 
 	// First page load check
 	handleNotify(BOSSES, GM_getValue("timeout"));
