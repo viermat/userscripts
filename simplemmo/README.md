@@ -13,12 +13,6 @@ Cemetery Walk is an undetectable userscript for auto stepping in SimpleMMO. This
 
 Gravedigger is a userscript that uses SimpleMMO's public API to imitate the "spy" function that the game offers, but without any in-game cost.
 
-> [!IMPORTANT]
-> Upon installing, go on SimpleMMO and check TamperMonkey menu. Press "Get API key" if it's your first use and refresh page
-
 # [Graveyard Shift](./graveyardShift.user.js)
 
 Graveyard Shift is a usercript that notifies you about upcoming world bosses.
-
-> [!IMPORTANT]
-> Upon installing, go on SimpleMMO and check TamperMonkey menu. Complete each of the "Set" buttons if it's your first use and refresh page

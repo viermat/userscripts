@@ -7,7 +7,6 @@
 // @icon         https://web.simple-mmo.com/favicon-32x32.png
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @grant        GM_registerMenuCommand
 // ==/UserScript==
 
 (async function () {
@@ -16,7 +15,7 @@
 	// Ensure script doesn't run in iframes
 	if (window.top !== window.self) return;
 
-	GM_registerMenuCommand("Get API Key", function () {
+	if (!GM_getValue("api_key")) {
 		let tempFrame = document.createElement("iframe");
 		tempFrame.setAttribute("src", "https://web.simple-mmo.com/p-api/home");
 		document.body.appendChild(tempFrame);
@@ -31,7 +30,7 @@
 
 			tempFrame.remove();
 		});
-	});
+	}
 
 	const API_URL = "https://api.simple-mmo.com/v1/";
 	const postReq = async (url) => {
