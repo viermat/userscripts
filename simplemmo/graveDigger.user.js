@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Gravedigger
-// @version      v1
+// @version      v2
 // @description  Spy player's stats before attacking
 // @author       viermat (https://github.com/viermat)
 // @match        https://web.simple-mmo.com/*
@@ -15,6 +15,7 @@
 	// Ensure script doesn't run in iframes
 	if (window.top !== window.self) return;
 
+	// Check for API key
 	if (!GM_getValue("api_key")) {
 		let tempFrame = document.createElement("iframe");
 		tempFrame.setAttribute("src", "https://web.simple-mmo.com/p-api/home");
@@ -29,6 +30,7 @@
 			);
 
 			tempFrame.remove();
+			location.reload();
 		});
 	}
 
@@ -48,12 +50,36 @@
 		});
 	};
 
+	// Cache system
+	if (!GM_getValue("cache") || GM_getValue("cache").stats.error) {
+		await postReq("player/me").then((s) => {
+			GM_setValue("cache", {
+				lastCache: new Date().getTime(),
+				stats: s,
+			});
+		});
+	}
+
 	// URL Path array
 	var argArr = location.href.split("/");
 
+	// Check if user is attacking another use
 	if (/\/user\/attack\/[0-9]+/g.test(location.href)) {
+		if (GM_getValue("cache")) {
+			let diff = new Date(GM_getValue("cache").lastCache) - new Date();
+
+			if (diff <= -2 * 60 * 1000) {
+				await postReq("player/me").then((s) => {
+					GM_setValue("cache", {
+						lastCache: new Date().getTime(),
+						stats: s,
+					});
+				});
+			}
+		}
+
 		// Calculate user's and opponents' strength and defence
-		const meData = await postReq("player/me");
+		const meData = GM_getValue("cache").stats;
 		const meStr = meData.str + meData.bonus_str;
 		const meDef = meData.def + meData.bonus_def;
 

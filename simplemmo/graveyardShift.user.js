@@ -187,10 +187,7 @@
 
 	// Regular check
 	setInterval(
-		() => {
-			handleNotify(BOSSES, GM_getValue("timeout"));
-		},
-
+		() => handleNotify(BOSSES, GM_getValue("timeout")),
 		GM_getValue("interval") * 60 * 1000,
 	);
 })();
